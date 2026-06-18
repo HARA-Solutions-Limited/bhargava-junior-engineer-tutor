@@ -1,0 +1,35 @@
+@startuml
+title Bhargava Tutoring Pipeline
+
+package "Tutoring Pipeline" {
+  [Chat Input] as IN
+  [Orient] as OR
+  [Map Services] as MAP
+  [Walk Trace] as WALK
+  [Connect Logs] as LOG
+  [Format Response] as FMT
+  [Quiz] as QUIZ
+  [Kibana Links] as LINK
+}
+
+package "Observability Tools" {
+  [get_services] as GS
+  [get_service_topology] as GT
+  [get_traces] as TR
+  [search_logs] as SL
+}
+
+IN --> OR
+OR --> MAP
+MAP --> GS
+MAP --> GT
+MAP --> WALK
+WALK --> TR
+WALK --> LOG
+LOG --> SL
+WALK --> FMT
+LOG --> FMT
+FMT --> LINK
+FMT --> QUIZ
+
+@enduml

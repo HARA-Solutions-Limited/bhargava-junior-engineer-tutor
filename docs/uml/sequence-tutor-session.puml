@@ -1,0 +1,49 @@
+@startuml sequence-tutor-session
+title Bhargava Tutoring Session — Checkout Trace Walkthrough
+
+actor "Junior Engineer" as J
+participant "Agent Builder\nChat UI" as UI
+participant "bhargava-tutor\nAgent" as B
+participant "Observability\nTools" as T
+database "Elasticsearch\nAPM" as ES
+participant "Kibana APM\nUI" as K
+participant "Astronomy Shop\n:8080" as S
+
+== Bootstrap (operator) ==
+S -> S : User browses & Place Order
+S -> ES : OTLP traces (frontend, checkout, …)
+
+== Tutoring session ==
+J -> UI : "Walk me through Place Order\nusing a real checkout trace"
+UI -> B : Forward message
+
+B -> T : get_services (last 30m)
+T -> ES : Query APM services
+ES --> T : Service list + health
+T --> B : checkout, frontend, payment, …
+
+B -> T : get_service_topology (checkout)
+T -> ES : Dependency graph
+ES --> T : Topology + RED metrics
+T --> B : checkout → payment, cart, …
+
+B -> T : get_traces (checkout, recent)
+T -> ES : Trace documents
+ES --> T : trace.id, spans, durations
+T --> B : Full checkout trace
+
+opt Log correlation
+    B -> T : get_correlated_logs
+    T -> ES : Logs for trace window
+    ES --> T : Log samples
+    T --> B
+end
+
+B -> UI : Formatted response:\n🗺️ Big picture\n🚶 Trace walkthrough\n💡 Concepts\n🔗 Kibana links\n❓ Quiz
+UI --> J : Display markdown + links
+
+J -> K : Click trace link
+K -> ES : Load trace detail
+K --> J : Visual span waterfall
+
+@enduml

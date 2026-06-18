@@ -1,0 +1,10 @@
+# Bhargava uses the Elastic fork of the OpenTelemetry demo.
+# Clone and run via bootstrap.sh — compose file lives in vendor/elastic-opentelemetry-demo.
+#
+# Convenience wrapper once bootstrapped:
+
+services:
+  astronomy-shop:
+    profiles: ["placeholder"]
+    image: alpine:3.19
+    command: ["sh", "-c", "echo Run: cd vendor/elastic-opentelemetry-demo && docker compose up -d"]

@@ -1,0 +1,47 @@
+@startuml c4-containers
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Container Diagram — Bhargava + Astronomy Shop (C4 L2)
+
+Person(junior, "Junior Engineer")
+
+System_Boundary(bhargava_sys, "Bhargava System") {
+    Container(chat, "Agent Builder Chat", "Kibana UI", "Conversation with bhargava-tutor")
+    Container(agent, "bhargava-tutor Agent", "Elastic Agent Builder", "Instructions + tool orchestration")
+}
+
+System_Boundary(shop_sys, "Astronomy Shop (Docker Compose)") {
+    Container(proxy, "frontend-proxy", "Envoy C++", "HTTP ingress :8080")
+    Container(frontend, "frontend", "TypeScript/React", "Web storefront")
+    Container(checkout, "checkout", "Go", "Purchase orchestrator")
+    Container(services, "Domain Services", "Polyglot", "payment, cart, shipping, catalog, …")
+    Container(collector, "OTel Collector", "OpenTelemetry", "Receives OTLP, exports to Elastic")
+    ContainerDb(valkey, "Valkey", "Cache", "Cart sessions")
+    ContainerQueue(kafka, "Kafka", "Message broker", "Async order events")
+    ContainerDb(postgres, "PostgreSQL", "Database", "Accounting, reviews")
+}
+
+System_Boundary(elastic_sys, "Elastic Cloud") {
+    ContainerDb(es, "Elasticsearch", "Search / APM store", "traces-apm*, logs-*")
+    Container(kibana, "Kibana", "Observability UI", "APM, Agent Builder, ES|QL")
+}
+
+Rel(junior, chat, "Asks questions")
+Rel(chat, agent, "Routes prompts")
+Rel(agent, kibana, "Invokes observability tools")
+Rel(kibana, es, "Queries APM data")
+Rel(junior, kibana, "Opens trace/service links")
+
+Rel(proxy, frontend, "HTTP")
+Rel(frontend, checkout, "gRPC")
+Rel(checkout, services, "gRPC/HTTP")
+Rel(checkout, kafka, "Publish order events")
+Rel(services, valkey, "Cache")
+Rel(services, postgres, "SQL")
+
+Rel(frontend, collector, "OTLP", "gRPC/HTTP")
+Rel(checkout, collector, "OTLP")
+Rel(services, collector, "OTLP")
+Rel(collector, es, "OTLP export")
+
+@enduml

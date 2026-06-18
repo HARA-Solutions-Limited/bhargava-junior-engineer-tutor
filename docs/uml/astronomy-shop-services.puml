@@ -1,0 +1,108 @@
+@startuml astronomy-shop-services
+title Astronomy Shop — Reverse-Engineered Service Topology
+
+skinparam componentStyle rectangle
+skinparam linetype ortho
+
+actor User
+actor "Load Generator" as LG
+
+cloud "Internet" {
+    [frontend-proxy\nEnvoy :8080] as Proxy
+}
+
+package "Edge & UI" {
+    [frontend\nTypeScript] as FE
+    [image-provider\nnginx] as IMG
+    [flagd-ui\nElixir] as FUI
+}
+
+package "Catalog & Discovery" {
+    [product-catalog\nGo] as PC
+    [product-reviews\nPython] as PR
+    [recommendation\nPython] as REC
+    [ad\nJava] as AD
+    [llm\nPython] as LLM
+}
+
+package "Commerce Core" {
+    [cart\n.NET] as CART
+    [checkout\nGo] as CHK
+    [payment\nJavaScript] as PAY
+    [currency\nC++] as CUR
+}
+
+package "Fulfilment & Comms" {
+    [shipping\nRust] as SHP
+    [quote\nPHP] as QTE
+    [email\nRuby] as EM
+}
+
+package "Async & Risk" {
+    [fraud-detection\nKotlin] as FRD
+    [accounting\n.NET] as ACC
+}
+
+package "Platform" {
+    [flagd\nGo] as FLG
+}
+
+database "Valkey" as CACHE
+queue "Kafka" as KFK
+database "PostgreSQL" as PG
+
+User --> Proxy
+LG --> Proxy
+Proxy --> FE
+Proxy --> IMG
+Proxy --> FUI
+
+FE --> PC : gRPC
+FE --> CART : gRPC
+FE --> CHK : gRPC
+FE --> CUR : gRPC
+FE --> REC : gRPC
+FE --> AD : gRPC
+FE --> SHP : HTTP
+FE --> PR : gRPC
+
+CHK --> CART : gRPC
+CHK --> PAY : gRPC
+CHK --> CUR : gRPC
+CHK --> PC : gRPC
+CHK --> SHP : HTTP
+CHK --> EM : HTTP
+CHK --> KFK : TCP publish
+
+SHP --> QTE : HTTP
+PR --> PC : gRPC
+PR --> LLM : gRPC
+PR --> PG
+REC --> PC : gRPC
+ACC --> PG
+KFK --> FRD
+KFK --> ACC
+
+CART --> CACHE
+CART --> FLG : gRPC
+PAY --> FLG
+AD --> FLG
+FRD --> FLG
+REC --> FLG
+PR --> FLG
+LLM --> FLG
+Proxy --> FLG
+
+note right of CHK
+  **Bhargava primary teaching anchor**
+  Place Order trace starts at
+  frontend → checkout → downstream
+end note
+
+note bottom of KFK
+  Async path (lesson 2):
+  checkout → fraud-detection
+  checkout → accounting
+end note
+
+@enduml

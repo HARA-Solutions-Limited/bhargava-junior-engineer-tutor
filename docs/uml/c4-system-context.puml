@@ -1,0 +1,23 @@
+@startuml c4-system-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title System Context — Bhargava (C4 L1)
+
+Person(junior, "Junior Engineer", "New hire learning microservices and observability")
+Person(operator, "Demo Operator", "Starts shop, generates traffic")
+
+System(bhargava, "Bhargava System", "AI tutor over live Astronomy Shop telemetry via Elastic Agent Builder")
+
+System_Ext(shop, "OpenTelemetry Astronomy Shop", "Microservices e-commerce demo emitting OTLP traces, logs, metrics")
+System_Ext(elastic, "Elastic Cloud Observability", "APM, logs, metrics storage and Kibana UI")
+System_Ext(agent_builder, "Elastic Agent Builder", "Hosts bhargava-tutor agent and observability tools")
+
+Rel(junior, agent_builder, "Chats with Bhargava", "HTTPS")
+Rel(junior, elastic, "Follows Kibana deep links", "HTTPS")
+Rel(operator, shop, "Runs Docker Compose, generates checkout traffic", "HTTP :8080")
+Rel(shop, elastic, "Exports OTLP telemetry", "OTLP/gRPC")
+Rel(agent_builder, elastic, "Queries traces, topology, logs", "Internal API")
+Rel(bhargava, agent_builder, "Implemented as")
+Rel(bhargava, shop, "Teaches architecture of")
+
+@enduml

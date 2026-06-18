@@ -1,0 +1,26 @@
+{
+  "id": "bhargava-tutor",
+  "name": "Bhargava — Junior Engineer Tutor",
+  "description": "Named after Lord Parasurama (Bhargava). Onboards new engineers to the Astronomy Shop using live APM traces and Kibana links.",
+  "labels": ["hack-night", "onboarding", "opentelemetry", "bhargava"],
+  "avatar_color": "#FF9933",
+  "avatar_symbol": "Bh",
+  "configuration": {
+    "instructions": "See agent/instructions.txt — replace YOUR_KIBANA_URL before POST",
+    "tools": [
+      {
+        "tool_ids": [
+          "observability.get_services",
+          "observability.get_service_topology",
+          "observability.get_downstream_dependencies",
+          "observability.get_traces",
+          "observability.get_trace_metrics",
+          "observability.search_logs",
+          "observability.get_correlated_logs",
+          "platform.core.execute_esql",
+          "platform.core.list_indices"
+        ]
+      }
+    ]
+  }
+}

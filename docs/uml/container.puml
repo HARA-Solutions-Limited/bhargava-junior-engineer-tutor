@@ -1,0 +1,34 @@
+@startuml
+' Legacy alias — see c4-containers.puml for full C4 diagram
+title Container Diagram (Bhargava) — simplified
+
+package "Bhargava" {
+  [Agent Builder Chat] as Chat
+  [bhargava-tutor Agent] as Agent
+}
+
+package "Astronomy Shop" {
+  [frontend-proxy] as Proxy
+  [frontend] as FE
+  [checkout] as CHK
+  [Domain Services] as Dom
+  [OTel Collector] as Coll
+}
+
+package "Elastic Cloud" {
+  [Kibana / APM] as KB
+  [Elasticsearch] as ES
+}
+
+Chat --> Agent
+Agent --> KB
+KB --> ES
+Proxy --> FE
+FE --> CHK
+CHK --> Dom
+FE --> Coll
+CHK --> Coll
+Dom --> Coll
+Coll --> ES : OTLP
+
+@enduml

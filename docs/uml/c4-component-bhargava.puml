@@ -1,0 +1,43 @@
+@startuml c4-component-bhargava
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Component Diagram — bhargava-tutor Agent (C4 L3)
+
+Container_Boundary(agent, "bhargava-tutor Agent") {
+    Component(chat_handler, "Chat Handler", "Agent Builder", "Receives user messages")
+    Component(instructions, "Instruction Engine", "Prompt config", "Bhargava persona, Bhargava method, URL templates")
+    Component(router, "Tool Router", "LLM", "Selects observability tools per intent")
+    Component(formatter, "Response Formatter", "Prompt contract", "Big picture → walkthrough → quiz")
+
+    Component(t_services, "get_services", "Built-in tool", "List APM services")
+    Component(t_topology, "get_service_topology", "Built-in tool", "Dependency graph")
+    Component(t_deps, "get_downstream_dependencies", "Built-in tool", "Downstream deps")
+    Component(t_traces, "get_traces", "Built-in tool", "Trace documents")
+    Component(t_metrics, "get_trace_metrics", "Built-in tool", "Latency / failure metrics")
+    Component(t_logs, "search_logs", "Built-in tool", "Log search")
+    Component(t_corr, "get_correlated_logs", "Built-in tool", "Trace-correlated logs")
+    Component(t_esql, "execute_esql", "Built-in tool", "Ad-hoc ES|QL")
+}
+
+ContainerDb(es, "Elasticsearch APM", "traces-apm*, logs-*")
+
+Rel(chat_handler, instructions, "Loads persona + method")
+Rel(chat_handler, router, "Passes user query")
+Rel(router, t_services, "Map architecture")
+Rel(router, t_topology, "Map architecture")
+Rel(router, t_deps, "Explain dependencies")
+Rel(router, t_traces, "Walk checkout trace")
+Rel(router, t_metrics, "Latency context")
+Rel(router, t_logs, "Connect logs")
+Rel(router, t_corr, "Connect logs")
+Rel(router, t_esql, "Custom queries")
+
+Rel(t_services, es, "Reads")
+Rel(t_topology, es, "Reads")
+Rel(t_traces, es, "Reads")
+Rel(t_logs, es, "Reads")
+
+Rel(router, formatter, "Raw tool results")
+Rel(formatter, chat_handler, "Structured markdown + Kibana links")
+
+@enduml

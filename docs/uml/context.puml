@@ -1,0 +1,27 @@
+@startuml
+' Legacy alias — see c4-system-context.puml for full C4 diagram
+title System Context (Bhargava) — simplified
+
+actor "Junior Engineer" as J
+actor "Demo Operator" as O
+
+rectangle "Bhargava System" as BH {
+  [Agent Builder\nbhargava-tutor] as AB
+}
+
+rectangle "OpenTelemetry\nAstronomy Shop" as SHOP
+rectangle "Elastic Cloud\nObservability" as ES
+rectangle "Elastic\nAgent Builder" as AB_EXT
+
+J --> AB : asks tutoring questions
+J --> ES : follows Kibana links
+O --> SHOP : runs demo + traffic
+SHOP --> ES : OTLP telemetry
+AB --> ES : observability tools
+
+note right of AB
+  Named after Lord Parasurama (Bhargava)
+  Teaches through live traces
+end note
+
+@enduml
