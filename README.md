@@ -58,6 +58,7 @@ bhargava-junior-engineer-tutor/
 | [docs/lld.md](docs/lld.md) | Agent tools, API, contracts |
 | [docs/elastic-cloud-setup.md](docs/elastic-cloud-setup.md) | Step-by-step Elastic Cloud configuration |
 | [docs/simulation-scenarios/](docs/simulation-scenarios/) | Easy / medium / hard training exercises |
+| [docs/hackathon-sprint-plan.md](docs/hackathon-sprint-plan.md) | 1-hour hackathon sprint plan (2 people) |
 
 ## Demo question
 

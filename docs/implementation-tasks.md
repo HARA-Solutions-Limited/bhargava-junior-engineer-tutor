@@ -1,5 +1,9 @@
 # Prioritized Implementation Tasks — Bhargava
 
+## Hackathon sprint (1 hour, 2 people)
+
+See [hackathon-sprint-plan.md](hackathon-sprint-plan.md) for the 30-minute block plan (Alapaty + Laxman Peri).
+
 ## Priority 1 (hack night)
 - Deploy Elastic fork of OpenTelemetry demo with OTLP → Elastic Cloud
 - Create `bhargava-tutor` agent with observability tools and Kibana URL in instructions
