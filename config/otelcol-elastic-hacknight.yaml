@@ -1,0 +1,248 @@
+exporters:
+  debug:
+  otlphttp/elastic:
+    endpoint: ${env:ELASTIC_OTLP_ENDPOINT}
+    headers:
+      Authorization: "ApiKey ${env:ELASTIC_OTLP_API_KEY}"
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:${env:OTEL_COLLECTOR_PORT_GRPC}
+      http:
+        endpoint: 0.0.0.0:${env:OTEL_COLLECTOR_PORT_HTTP}
+        cors:
+          allowed_origins:
+            - "http://*"
+            - "https://*"
+  httpcheck/frontendproxy:
+    targets:
+      - endpoint: http://frontendproxy:${env:ENVOY_PORT}
+  hostmetrics:
+    collection_interval: 10s
+    root_path: /hostfs
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+          system.cpu.logical.count:
+            enabled: true
+      memory:
+        metrics:
+          system.memory.utilization:
+            enabled: true
+      process:
+        mute_process_exe_error: true
+        mute_process_io_error: true
+        mute_process_user_error: true
+        metrics:
+          process.threads:
+            enabled: true
+          process.open_file_descriptors:
+            enabled: true
+          process.memory.utilization:
+            enabled: true
+          process.disk.operations:
+            enabled: true
+      network: {}
+      processes: {}
+      load: {}
+      disk: {}
+      filesystem:
+        exclude_mount_points:
+          mount_points:
+            - /dev/*
+            - /proc/*
+            - /sys/*
+            - /run/k3s/containerd/*
+            - /var/lib/docker/*
+            - /var/lib/kubelet/*
+            - /snap/*
+          match_type: regexp
+        exclude_fs_types:
+          fs_types:
+            - autofs
+            - binfmt_misc
+            - bpf
+            - cgroup2
+            - configfs
+            - debugfs
+            - devpts
+            - devtmpfs
+            - fusectl
+            - hugetlbfs
+            - iso9660
+            - mqueue
+            - nsfs
+            - overlay
+            - proc
+            - procfs
+            - pstore
+            - rpc_pipefs
+            - securityfs
+            - selinuxfs
+            - squashfs
+            - sysfs
+            - tracefs
+          match_type: strict
+
+processors:
+  batch:
+  resourcedetection/system:
+    detectors: ["system"]
+    system:
+      hostname_sources: ["os"]
+      resource_attributes:
+        host.name:
+          enabled: true
+        host.id:
+          enabled: false
+        host.arch:
+          enabled: true
+        host.ip:
+          enabled: true
+        host.mac:
+          enabled: true
+        host.cpu.vendor.id:
+          enabled: true
+        host.cpu.family:
+          enabled: true
+        host.cpu.model.id:
+          enabled: true
+        host.cpu.model.name:
+          enabled: true
+        host.cpu.stepping:
+          enabled: true
+        host.cpu.cache.l2.size:
+          enabled: true
+        os.description:
+          enabled: true
+        os.type:
+          enabled: true
+
+  # Required by DevOps Society hack night — routes OTLP logs to logs.otel index
+  # https://github.com/carlyrichmond/devops-society-elastic-hack-night
+  transform/logs-streams:
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["elasticsearch.index"], "logs.otel")
+
+  transform/sanitize_spans:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          # Sanitize spans to prevent span metrics cardinality explosion
+          # caused by non-compliant high cardinality span names:
+          # 1. Define missing http.route on key HTTP operations for meaningful operation names
+          # 2. Then normalize span names; http server spans lacking http.route default to operations "GET", "POST", etc.
+
+          # FRONTEND SERVICE
+
+          # Workaround for Next.js high cardinality span name issue: https://github.com/vercel/next.js/issues/54694
+          - set(span.attributes["http.route"], "/api/cart") where
+            span.kind == SPAN_KIND_SERVER and
+            resource.attributes["service.name"] == "frontend" and
+            span.attributes["http.route"] == nil and
+            IsMatch(span.attributes["http.target"], "\\/api\\/cart")
+
+          - set(span.attributes["http.route"], "/api/checkout") where
+            span.kind == SPAN_KIND_SERVER and
+            resource.attributes["service.name"] == "frontend" and
+            span.attributes["http.route"] == nil and
+            IsMatch(span.attributes["http.target"], "\\/api\\/checkout")
+
+          - set(span.attributes["http.route"], "/api/products/{productId}") where
+            span.kind == SPAN_KIND_SERVER and
+            resource.attributes["service.name"] == "frontend" and
+            span.attributes["http.route"] == nil and
+            IsMatch(span.attributes["http.target"], "\\/api\\/products\\/.*")
+
+          - set(span.attributes["http.route"], "/api/recommendations") where
+            span.kind == SPAN_KIND_SERVER and
+            resource.attributes["service.name"] == "frontend" and
+            span.attributes["http.route"] == nil and
+            IsMatch(span.attributes["http.target"], "\\/api\\/recommendations")
+
+          - set(span.attributes["http.route"], "/api/data") where
+            span.kind == SPAN_KIND_SERVER and
+            resource.attributes["service.name"] == "frontend" and
+            span.attributes["http.route"] == nil and
+            IsMatch(span.attributes["http.target"], "\\/api\\/data.*")
+
+          # FRONTEND-PROXY (Envoy) - ingress spans
+          - set(span.name, Concat([span.attributes["http.method"], " ", span.attributes["http.url"]], "")) where
+            resource.attributes["service.name"] == "frontend-proxy" and
+            span.name == "ingress" and
+            span.attributes["http.method"] != nil and
+            span.attributes["http.url"] != nil
+          # FRONTEND-PROXY (Envoy) - egress spans
+          - set(span.name, Concat([span.attributes["http.method"], " ", span.attributes["http.url"]], "")) where
+            resource.attributes["service.name"] == "frontend-proxy" and
+            span.name == "egress" and
+            span.attributes["http.method"] != nil and
+            span.attributes["http.url"] != nil
+          # FRONTEND-PROXY (Envoy) - router spans
+          - set(span.name, Concat(["router ", span.attributes["upstream_cluster"]], "")) where
+            resource.attributes["service.name"] == "frontend-proxy" and
+            span.name == "router" and
+            span.attributes["upstream_cluster"] != nil
+
+          # NORMALIZE HIGH-CARDINALITY PATTERNS (frontend-proxy)
+          - replace_pattern(span.name, "/api/products/[A-Za-z0-9]+", "/api/products/{productId}") where
+            resource.attributes["service.name"] == "frontend-proxy" and
+            IsMatch(span.name, ".*/api/products/[A-Za-z0-9]+.*")
+          - replace_pattern(span.name, "/api/recommendations\\?productIds=[^\\s]+", "/api/recommendations") where
+            resource.attributes["service.name"] == "frontend-proxy" and
+            IsMatch(span.name, ".*/api/recommendations\\?.*")
+          - replace_pattern(span.name, "/api/data[^\\s]*", "/api/data") where
+            resource.attributes["service.name"] == "frontend-proxy" and
+            IsMatch(span.name, ".*/api/data[/?].*")
+
+          # Manually update span names based on http.route
+          - set(span.name, Concat([span.attributes["http.method"], " ", span.attributes["http.route"]], "")) where
+            span.attributes["http.route"] != nil and
+            span.attributes["http.method"] != nil
+
+service:
+  pipelines:
+    logs:
+      exporters:
+        - debug
+        - otlphttp/elastic
+      processors:
+        - batch
+        - transform/logs-streams
+      receivers:
+        - otlp
+    metrics/infra/otel:
+      exporters:
+        - otlphttp/elastic
+        - debug
+      processors:
+        - batch
+        - resourcedetection/system
+      receivers:
+        - hostmetrics
+    metrics:
+      exporters:
+        - otlphttp/elastic
+        - debug
+      processors:
+        - batch
+      receivers:
+        - httpcheck/frontendproxy
+        - otlp
+    traces:
+      exporters:
+        - otlphttp/elastic
+        - debug
+      processors:
+        - transform/sanitize_spans
+        - batch
+      receivers:
+        - otlp
+

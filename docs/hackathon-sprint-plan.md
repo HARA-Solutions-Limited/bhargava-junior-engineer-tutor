@@ -1,5 +1,7 @@
 # Bhargava hackathon sprint plan — 1 hour, 2 people
 
+> **Official hack night requirements:** [hack-night-alignment.md](hack-night-alignment.md) (maps [DevOps Society repo](https://github.com/carlyrichmond/devops-society-elastic-hack-night))
+
 **Team:** [Alapaty](https://www.linkedin.com/in/alapaty/) + [Laxman Peri](https://www.linkedin.com/in/laxman-peri/)  
 **Clock time:** 60 minutes (2 × 30 min sprints)  
 **Goal:** Live end-to-end demo — Astronomy Shop → Elastic APM → Bhargava trace walkthrough with clickable Kibana links

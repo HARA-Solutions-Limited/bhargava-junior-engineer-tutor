@@ -11,6 +11,12 @@ fi
 
 : "${KIBANA_URL:?Set KIBANA_URL in .env}"
 : "${API_KEY:?Set API_KEY in .env}"
+API_KEY="${API_KEY#"${API_KEY%%[![:space:]]*}"}"
+API_KEY="${API_KEY%"${API_KEY##*[![:space:]]}"}"
+if [[ "${API_KEY}" == *" "* ]]; then
+  echo "API_KEY must be the single encoded value from Kibana (no spaces)."
+  exit 1
+fi
 KIBANA_BASE_URL="${KIBANA_BASE_URL:-${KIBANA_URL}}"
 
 INSTRUCTIONS_FILE="${ROOT_DIR}/agent/instructions.txt"
@@ -34,11 +40,9 @@ payload = {
             "tool_ids": [
                 "observability.get_services",
                 "observability.get_service_topology",
-                "observability.get_downstream_dependencies",
                 "observability.get_traces",
                 "observability.get_trace_metrics",
-                "observability.search_logs",
-                "observability.get_correlated_logs",
+                "observability.get_logs",
                 "platform.core.execute_esql",
                 "platform.core.list_indices",
             ]
@@ -48,11 +52,32 @@ payload = {
 json.dump(payload, open(out_path, "w"))
 PY
 
-curl -sf -X POST "${KIBANA_URL%/}/api/agent_builder/agents" \
+HTTP_CODE="$(curl -s -o /tmp/bhargava-agent-response.json -w '%{http_code}' \
+  -X POST "${KIBANA_URL%/}/api/agent_builder/agents" \
   -H "Authorization: ApiKey ${API_KEY}" \
   -H "kbn-xsrf: true" \
   -H "Content-Type: application/json" \
-  -d @"${TMP_PAYLOAD}"
+  -d @"${TMP_PAYLOAD}")"
 
+if [ "${HTTP_CODE}" = "409" ]; then
+  HTTP_CODE="$(curl -s -o /tmp/bhargava-agent-response.json -w '%{http_code}' \
+    -X PUT "${KIBANA_URL%/}/api/agent_builder/agents/bhargava-tutor" \
+    -H "Authorization: ApiKey ${API_KEY}" \
+    -H "kbn-xsrf: true" \
+    -H "Content-Type: application/json" \
+    -d @"${TMP_PAYLOAD}")"
+fi
+
+if [ "${HTTP_CODE}" -ge 200 ] && [ "${HTTP_CODE}" -lt 300 ]; then
+  echo "Agent bhargava-tutor ready (HTTP ${HTTP_CODE}). Open Kibana → Agent Builder."
+  exit 0
+fi
+
+echo "Agent create failed (HTTP ${HTTP_CODE})."
+cat /tmp/bhargava-agent-response.json 2>/dev/null || true
 echo ""
-echo "Agent bhargava-tutor created (or updated — check Kibana on conflict)."
+if [ "${HTTP_CODE}" = "401" ] || [ "${HTTP_CODE}" = "403" ]; then
+  echo "Fix: Kibana → API keys → create key with Agent Builder scope."
+  echo "Use the full encoded key (id:secret base64), not a fragment."
+fi
+exit 1

@@ -2,22 +2,21 @@
 
 An Elastic Agent Builder tutor named **Bhargava** (after Lord Parasurama) that onboards junior engineers to the **OpenTelemetry Astronomy Shop** using live traces, service topology, and Kibana deep links.
 
-Built for the DevOps Society × Elastic London Hack Night.
+Built for the [DevOps Society × Elastic London Hack Night](https://github.com/carlyrichmond/devops-society-elastic-hack-night) — see **[docs/hack-night-alignment.md](docs/hack-night-alignment.md)** for how this project satisfies the official requirements.
 
 ## Quick start
 
 ```bash
-chmod +x bootstrap.sh
+chmod +x bootstrap.sh scripts/*.sh
 ./bootstrap.sh
 
-# After Elastic Cloud credentials are in .env:
-cd vendor/elastic-opentelemetry-demo
-docker compose up -d
+# Edit .env with Elastic Cloud credentials (see docs/hack-night-alignment.md)
+./scripts/hack-night-complete.sh   # full hack night + Bhargava flow
 
-# Create agent in Kibana (UI) or:
-../scripts/create-agent.sh
-
-# Generate shop traffic, then chat with bhargava-tutor in Agent Builder
+# Or step by step:
+./scripts/start-demo.sh
+./scripts/create-agent.sh
+./scripts/place-order.sh
 open http://localhost:8080
 ```
 
@@ -36,7 +35,14 @@ bhargava-junior-engineer-tutor/
 │   └── bhargava-tutor-agent.json
 ├── scripts/
 │   ├── create-agent.sh
-│   └── generate-traffic.sh
+│   ├── generate-traffic.sh
+│   ├── start-demo.sh
+│   ├── place-order.sh
+│   ├── verify-setup.sh
+│   └── hack-night-complete.sh
+├── config/
+│   ├── otelcol-elastic-hacknight.yaml   # collector + logs-streams processor
+│   └── docker-compose.bhargava-fix.yml
 └── docs/
     ├── requirements.md
     ├── hld.md
@@ -58,6 +64,7 @@ bhargava-junior-engineer-tutor/
 | [docs/lld.md](docs/lld.md) | Agent tools, API, contracts |
 | [docs/elastic-cloud-setup.md](docs/elastic-cloud-setup.md) | Step-by-step Elastic Cloud configuration |
 | [docs/simulation-scenarios/](docs/simulation-scenarios/) | Easy / medium / hard training exercises |
+| [docs/hack-night-alignment.md](docs/hack-night-alignment.md) | **Official hack night checklist mapped to Bhargava** |
 | [docs/hackathon-sprint-plan.md](docs/hackathon-sprint-plan.md) | 1-hour hackathon sprint plan (2 people) |
 
 ## Demo question

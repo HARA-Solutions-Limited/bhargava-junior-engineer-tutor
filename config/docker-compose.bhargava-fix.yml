@@ -1,0 +1,11 @@
+# Bhargava overlays for the Elastic OpenTelemetry demo (Docker path).
+# Official hack night k8s path: docs/hack-night-alignment.md
+services:
+  frontend-proxy:
+    environment:
+      - FIREPIT_HOST=telemetry-docs
+      - FIREPIT_PORT=8000
+  shipping:
+    environment:
+      - FLAGD_HOST=flagd
+      - FLAGD_PORT=8013

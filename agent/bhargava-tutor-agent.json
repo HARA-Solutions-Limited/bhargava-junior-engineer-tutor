@@ -12,11 +12,9 @@
         "tool_ids": [
           "observability.get_services",
           "observability.get_service_topology",
-          "observability.get_downstream_dependencies",
           "observability.get_traces",
           "observability.get_trace_metrics",
-          "observability.search_logs",
-          "observability.get_correlated_logs",
+          "observability.get_logs",
           "platform.core.execute_esql",
           "platform.core.list_indices"
         ]

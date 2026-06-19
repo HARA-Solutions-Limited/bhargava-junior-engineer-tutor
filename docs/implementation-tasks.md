@@ -1,11 +1,22 @@
 # Prioritized Implementation Tasks — Bhargava
 
+## Hack night alignment
+
+See [hack-night-alignment.md](hack-night-alignment.md) for the official [DevOps Society hack night](https://github.com/carlyrichmond/devops-society-elastic-hack-night) checklist mapped to this project.
+
+Quick run: `./scripts/hack-night-complete.sh`
+
 ## Hackathon sprint (1 hour, 2 people)
 
 See [hackathon-sprint-plan.md](hackathon-sprint-plan.md) for the 30-minute block plan (Alapaty + Laxman Peri).
 
-## Priority 1 (hack night)
-- Deploy Elastic fork of OpenTelemetry demo with OTLP → Elastic Cloud
+## Priority 1 (hack night — aligned with [official repo](https://github.com/carlyrichmond/devops-society-elastic-hack-night))
+
+See [hack-night-alignment.md](hack-night-alignment.md) for the full checklist.
+
+- Elastic Serverless Observability + valid mOTLP endpoint + API keys in `.env`
+- `./scripts/start-demo.sh` (Docker) or `./demo.sh k8s` (official k8s path)
+- `transform/logs-streams` via `config/otelcol-elastic-hacknight.yaml`
 - Create `bhargava-tutor` agent with observability tools and Kibana URL in instructions
 - Validate checkout trace walkthrough demo question end-to-end
 - Rehearse 5-minute lightning demo with live Kibana link click
